@@ -58,7 +58,10 @@ def _print_test_table(spec: SystemSpec, rows: list[dict]) -> str:
 def run_query(key: str, x1: float, x2: float) -> None:
     spec = _spec_by_key(key)
     system = FuzzySystem(spec)
-    y = system.infer(x1, x2)
+    try:
+        y = system.infer(x1, x2)
+    except ValueError as exc:
+        raise SystemExit(f"Błąd danych wejściowych: {exc}")
     print(f"\n=== {spec.title} ===")
     print(f"{spec.input1.name} = {x1:g} {spec.input1.unit}")
     print(f"{spec.input2.name} = {x2:g} {spec.input2.unit}")

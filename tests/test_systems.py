@@ -52,6 +52,21 @@ def test_wyjscie_w_zakresie(spec):
         assert spec.output.vmin <= y <= spec.output.vmax
 
 
+def test_walidacja_zakresu_wejsc(spec):
+    """Wejście spoza zakresu zmiennej powinno rzucić ValueError, a nie
+    zostać po cichu przycięte do granicy uniwersum."""
+    system = FuzzySystem(spec)
+    poza1 = spec.input1.vmax + 1
+    poza2 = spec.input2.vmin - 1
+    with pytest.raises(ValueError):
+        system.infer(poza1, (spec.input2.vmin + spec.input2.vmax) / 2)
+    with pytest.raises(ValueError):
+        system.infer((spec.input1.vmin + spec.input1.vmax) / 2, poza2)
+    # wartości na samych granicach są dozwolone
+    assert system.infer(spec.input1.vmin, spec.input2.vmin) is not None
+    assert system.infer(spec.input1.vmax, spec.input2.vmax) is not None
+
+
 def test_monotonicznosc_drugiego_wejscia():
     """Dla ryzyka inwestycji: przy stałej stopie zwrotu wzrost zmienności
     rynku nie obniża szacowanego ryzyka."""

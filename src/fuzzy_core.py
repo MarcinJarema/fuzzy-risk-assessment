@@ -148,8 +148,28 @@ class FuzzySystem:
 
     # -- wnioskowanie ----------------------------------------------------------
 
+    @staticmethod
+    def _check_range(var: Variable, value: float) -> None:
+        if not (var.vmin <= value <= var.vmax):
+            raise ValueError(
+                f"Wartość {value:g} dla zmiennej '{var.name}' jest poza dozwolonym "
+                f"zakresem [{var.vmin:g}, {var.vmax:g}] {var.unit}. "
+                "Wejścia spoza zakresu byłyby po cichu przycięte do granicy i dałyby "
+                "mylący wynik — popraw dane wejściowe."
+            )
+
     def infer(self, x1: float, x2: float) -> float:
-        """Zwraca wartość wyjściową po defuzyfikacji dla zadanych wejść."""
+        """Zwraca wartość wyjściową po defuzyfikacji dla zadanych wejść.
+
+        Raises
+        ------
+        ValueError
+            Gdy któreś wejście wykracza poza zakres swojej zmiennej. Bez tej
+            kontroli ``scikit-fuzzy`` po cichu przyciąłby wartość do granicy
+            uniwersum, zwracając mylący wynik.
+        """
+        self._check_range(self.spec.input1, x1)
+        self._check_range(self.spec.input2, x2)
         self._sim.input[self.spec.input1.name] = x1
         self._sim.input[self.spec.input2.name] = x2
         self._sim.compute()
