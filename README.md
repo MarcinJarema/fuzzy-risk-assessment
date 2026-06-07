@@ -68,6 +68,12 @@ python main.py --system inwestycja --query 8 85       # -> Ryzyko = 81.94 %
 python main.py --system dostawy    --query 95 7        # -> Ryzyko = 16.67 %
 ```
 
+Analiza operatorów (porównanie metod defuzyfikacji centroid/bisector/mom/som/lom):
+
+```bash
+python main.py --operators          # zapisuje results/analiza_operatorow.md
+```
+
 Testy:
 
 ```bash

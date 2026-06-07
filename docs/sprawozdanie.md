@@ -4,10 +4,38 @@
 (ryzyko klienta, ryzyko inwestycji, ryzyko dostaw)
 **Środowisko:** Python 3.12 + biblioteka `scikit-fuzzy` (zamiast MATLAB Fuzzy Logic Designer)
 **Typ systemu:** Mamdani Type‑1, zbiory rozmyte typu 1
+**Repozytorium:** <https://github.com/MarcinJarema/fuzzy-risk-assessment>
+
+**Autorzy (grupa 2‑osobowa):** Marcin Jarema, Marcin Jarema
 
 Sprawozdanie realizuje proces projektowania systemu rozmytego krok po kroku,
 zgodnie ze schematem projektowania (kroki 1–7), powtórzony dla trzech
 niezależnych problemów biznesowych z obszaru zarządzania ryzykiem.
+
+### Podział pracy
+
+| Część projektu | Osoba odpowiedzialna |
+|---|---|
+| Opis zastosowania, koncepcja systemów | Marcin Jarema |
+| Zmienne lingwistyczne i zbiory rozmyte | Marcin Jarema |
+| Baza reguł (wiedza eksperta) | Marcin Jarema |
+| Implementacja (silnik, kod, testy) | Marcin Jarema |
+| Analiza operatorów i przykłady | Marcin Jarema |
+| Wnioski, dokumentacja | Marcin Jarema |
+
+> *Uwaga: powyższy podział należy uzupełnić zgodnie z faktycznym wkładem obu
+> uczestników grupy.*
+
+### Mapa kryteriów oceny
+
+| Kryterium oceny | Pkt | Rozdział sprawozdania |
+|---|---|---|
+| 1. Opis zastosowania systemu | 20 | 1–2 |
+| 2a. Zmienne lingwistyczne we/wy | 15 | 3 |
+| 2b. Zbiory rozmyte i wartości lingwistyczne | 15 | 3 |
+| 2c. Baza reguł | 15 | 4 |
+| 3. Przykłady + analiza operatorów | 20 | 6 |
+| 4. Wnioski | 15 | 7 |
 
 ---
 
@@ -232,6 +260,69 @@ Dodatkowo poprawność systemów potwierdza zestaw 15 testów automatycznych
 (`pytest`), sprawdzających m.in. kompletność bazy reguł, pełne pokrycie zakresów
 zmiennych, zakres wartości wyjściowych oraz **monotoniczność** (wzrost
 zmienności rynku nie obniża szacowanego ryzyka inwestycji).
+
+### 6.4. Analiza operatorów wnioskowania
+
+System Mamdaniego można skonfigurować różnymi operatorami na każdym etapie
+wnioskowania. W projekcie przyjęto klasyczny zestaw (AND = `min`, implikacja =
+`min`, agregacja = `max`, defuzyfikacja = `centroid`), a poniżej zbadano wpływ
+zmiany operatorów na wynik.
+
+**a) Operator AND (t‑norma) i implikacja.**
+Przesłanki reguł łączone są spójnikiem AND realizowanym jako t‑norma `min` —
+stopień aktywacji reguły to minimum przynależności obu wejść. Alternatywą jest
+t‑norma iloczynowa (`prod`), która daje „łagodniejsze" aktywacje (iloczyn ≤
+minimum), przez co reguły o częściowym dopasowaniu wpływają na wynik słabiej.
+Analogicznie implikacja `min` „obcina" konkluzję na poziomie aktywacji reguły,
+a `prod` ją skaluje. Dla przyjętych funkcji przynależności, gdzie w większości
+punktów dominuje jedna reguła, oba warianty dają zbliżone wyniki; różnice
+ujawniają się w strefach nakładania się zbiorów.
+
+**b) Metoda defuzyfikacji (wyostrzania).**
+Największy wpływ na konkretną wartość liczbową ma metoda defuzyfikacji.
+Porównano pięć metod dostępnych w `scikit-fuzzy` dla tych samych przykładów
+(pełne wyniki: `results/analiza_operatorow.md`):
+
+| Metoda | Opis |
+|---|---|
+| `centroid` | środek ciężkości pola wynikowego (domyślna) |
+| `bisector` | dwusieczna dzieląca pole na dwie równe części |
+| `mom` | środek przedziału maksimum (*mean of maximum*) |
+| `som` | najmniejsza wartość maksimum (*smallest of maximum*) |
+| `lom` | największa wartość maksimum (*largest of maximum*) |
+
+Przykład — system **ryzyka klienta**:
+
+| Dochod | Historia | centroid | bisector | mom | som | lom |
+|---|---|---|---|---|---|---|
+| 2000 | 15 | 83,33 | 85,36 | 100 | 100 | 100 |
+| 3000 | 80 | 50,00 | 50,00 | 50 | 50 | 50 |
+| 16000 | 90 | 16,67 | 14,64 | 0 | 0 | 0 |
+
+Przykład — system **ryzyka inwestycji**:
+
+| Stopa_zwrotu | Zmiennosc | centroid | bisector | mom | som | lom |
+|---|---|---|---|---|---|---|
+| 4 | 15 | 16,67 | 14,64 | 0 | 0 | 0 |
+| 8 | 85 | 81,94 | 83,33 | 91,52 | 83,33 | 100 |
+| 27 | 90 | 83,33 | 85,36 | 100 | 100 | 100 |
+
+**Wnioski z analizy operatorów:**
+
+- `centroid` i `bisector` dają wyniki bardzo zbliżone i „wygładzone" — biorą pod
+  uwagę całą powierzchnię wynikową, dzięki czemu reagują płynnie na zmianę
+  wejść. To czyni je najlepszym wyborem dla oceny ryzyka, gdzie zależy nam na
+  proporcjonalnej, ciągłej skali.
+- Metody maksimum (`mom`, `som`, `lom`) zwracają wartości skrajne (np. 0 lub
+  100), gdy w danym punkcie dominuje pojedyncza reguła. Tracą informację o
+  „stopniu" ryzyka i powodują skokową, mało intuicyjną charakterystykę —
+  nieodpowiednią dla tego zastosowania.
+- Gdy aktywna jest tylko jedna, symetryczna reguła (np. wynik „średnie"),
+  wszystkie metody zgadzają się na wartości 50 — różnice pojawiają się dopiero
+  przy asymetrycznym rozkładzie aktywacji reguł.
+
+Potwierdza to zasadność domyślnego wyboru **środka ciężkości** jako metody
+defuzyfikacji w zaprojektowanych systemach.
 
 ## 7. Wnioski i dalsze kroki
 

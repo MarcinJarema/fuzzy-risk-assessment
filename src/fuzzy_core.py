@@ -106,8 +106,17 @@ def _make_mf(universe: np.ndarray, mf: MF) -> np.ndarray:
 class FuzzySystem:
     """Działający system rozmyty zbudowany na podstawie :class:`SystemSpec`."""
 
-    def __init__(self, spec: SystemSpec) -> None:
+    #: Metody defuzyfikacji udostępniane przez scikit-fuzzy.
+    DEFUZZ_METHODS = ("centroid", "bisector", "mom", "som", "lom")
+
+    def __init__(self, spec: SystemSpec, defuzz_method: str = "centroid") -> None:
+        if defuzz_method not in self.DEFUZZ_METHODS:
+            raise ValueError(
+                f"Nieznana metoda defuzyfikacji: {defuzz_method!r}. "
+                f"Dostępne: {self.DEFUZZ_METHODS}"
+            )
         self.spec = spec
+        self.defuzz_method = defuzz_method
 
         # --- zmienne wejściowe (Antecedent) i wyjściowa (Consequent) ---
         self._ant1 = self._build_antecedent(spec.input1)
@@ -141,7 +150,7 @@ class FuzzySystem:
         return ant
 
     def _build_consequent(self, var: Variable) -> ctrl.Consequent:
-        con = ctrl.Consequent(self._universe(var), var.name, defuzzify_method="centroid")
+        con = ctrl.Consequent(self._universe(var), var.name, defuzzify_method=self.defuzz_method)
         for mf in var.mfs:
             con[mf.label] = _make_mf(con.universe, mf)
         return con
@@ -251,6 +260,37 @@ def plot_surface(spec: SystemSpec, system: FuzzySystem, out_path: Path, n: int =
     fig.tight_layout()
     fig.savefig(out_path, dpi=130)
     plt.close(fig)
+
+
+def compare_defuzzifiers(
+    spec: SystemSpec,
+    cases: Sequence[tuple[float, float]],
+    methods: Sequence[str] = FuzzySystem.DEFUZZ_METHODS,
+) -> tuple[list[str], list[dict]]:
+    """Porównuje wynik systemu dla różnych metod defuzyfikacji (analiza operatorów).
+
+    Buduje ten sam system rozmyty (te same zmienne i reguły) osobno dla każdej
+    metody wyostrzania, a następnie liczy wyjście dla wspólnego zestawu wejść.
+
+    Zwraca ``(nazwy_metod, wiersze)``, gdzie każdy wiersz zawiera wejścia oraz
+    wartość wyjściową uzyskaną każdą z metod.
+
+    Skróty metod (scikit-fuzzy):
+
+    * ``centroid`` — środek ciężkości,
+    * ``bisector`` — dwusieczna pola,
+    * ``mom``      — środek maksimum (*mean of maximum*),
+    * ``som``      — najmniejsze z maksimów (*smallest of maximum*),
+    * ``lom``      — największe z maksimów (*largest of maximum*).
+    """
+    systems = {m: FuzzySystem(spec, defuzz_method=m) for m in methods}
+    rows: list[dict] = []
+    for x1, x2 in cases:
+        row = {spec.input1.name: x1, spec.input2.name: x2}
+        for m in methods:
+            row[m] = round(systems[m].infer(x1, x2), 2)
+        rows.append(row)
+    return list(methods), rows
 
 
 def run_tests(system: FuzzySystem, cases: Sequence[tuple[float, float]]) -> list[dict]:

@@ -24,6 +24,7 @@ from src import SPECS, TEST_CASES
 from src.fuzzy_core import (
     FuzzySystem,
     SystemSpec,
+    compare_defuzzifiers,
     plot_membership,
     plot_surface,
     run_tests,
@@ -53,6 +54,36 @@ def _print_test_table(spec: SystemSpec, rows: list[dict]) -> str:
     table = "\n".join(lines)
     print("\n" + table)
     return table
+
+
+def _operator_table(spec: SystemSpec) -> str:
+    """Buduje tabelę porównującą metody defuzyfikacji dla danego systemu."""
+    methods, rows = compare_defuzzifiers(spec, TEST_CASES[spec.key])
+    i1, i2 = spec.input1.name, spec.input2.name
+    header = f"| {i1} | {i2} | " + " | ".join(methods) + " |"
+    sep = "|" + "---|" * (2 + len(methods))
+    lines = [f"### {spec.title}", "", header, sep]
+    for r in rows:
+        cells = [f"{r[i1]:g}", f"{r[i2]:g}"] + [f"{r[m]:g}" for m in methods]
+        lines.append("| " + " | ".join(cells) + " |")
+    table = "\n".join(lines)
+    print("\n" + table)
+    return table
+
+
+def run_operators() -> None:
+    """Analiza operatorów: porównanie metod defuzyfikacji dla wszystkich systemów."""
+    RESULTS_DIR.mkdir(exist_ok=True)
+    md = [
+        "# Analiza operatorów — porównanie metod defuzyfikacji\n",
+        "Wynik [%] dla tych samych przykładów przy różnych metodach wyostrzania "
+        "(centroid, bisector, mom, som, lom). Operatory wnioskowania pozostają "
+        "stałe: AND = min, implikacja = min, agregacja = max.\n",
+    ]
+    for spec in SPECS:
+        md.append(_operator_table(spec) + "\n")
+    (RESULTS_DIR / "analiza_operatorow.md").write_text("\n".join(md), encoding="utf-8")
+    print(f"\nAnaliza operatorów zapisana w: {RESULTS_DIR / 'analiza_operatorow.md'}")
 
 
 def run_query(key: str, x1: float, x2: float) -> None:
@@ -90,6 +121,9 @@ def run_all(make_plots: bool = True) -> None:
     (RESULTS_DIR / "tabela_testow.md").write_text("\n".join(md_tables), encoding="utf-8")
     print(f"\nWyniki zapisane w: {RESULTS_DIR}")
 
+    print(f"\n{'=' * 70}\nANALIZA OPERATORÓW (metody defuzyfikacji)\n{'=' * 70}")
+    run_operators()
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Systemy rozmyte do oceny ryzyka biznesowego.")
@@ -106,9 +140,16 @@ def main() -> None:
         help="wartości dwóch wejść dla wybranego systemu",
     )
     parser.add_argument("--no-plots", action="store_true", help="pomiń generowanie wykresów")
+    parser.add_argument(
+        "--operators",
+        action="store_true",
+        help="tylko analiza operatorów (porównanie metod defuzyfikacji)",
+    )
     args = parser.parse_args()
 
-    if args.system and args.query:
+    if args.operators:
+        run_operators()
+    elif args.system and args.query:
         run_query(args.system, args.query[0], args.query[1])
     elif args.system or args.query:
         parser.error("--system i --query muszą być podane razem")

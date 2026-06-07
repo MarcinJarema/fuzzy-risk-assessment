@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from src import SPECS, TEST_CASES
-from src.fuzzy_core import FuzzySystem
+from src.fuzzy_core import FuzzySystem, compare_defuzzifiers
 
 
 @pytest.fixture(params=SPECS, ids=lambda s: s.key)
@@ -78,6 +78,21 @@ def test_monotonicznosc_drugiego_wejscia():
         y = system.infer(15, zmiennosc)  # stała, średnia stopa zwrotu
         assert y >= poprzednie - 1e-6, "ryzyko spadło mimo wzrostu zmienności"
         poprzednie = y
+
+
+def test_analiza_operatorow_defuzyfikacji(spec):
+    """compare_defuzzifiers zwraca wynik każdą metodą, w zakresie wyjścia."""
+    methods, rows = compare_defuzzifiers(spec, TEST_CASES[spec.key])
+    assert set(methods) == set(FuzzySystem.DEFUZZ_METHODS)
+    assert len(rows) == len(TEST_CASES[spec.key])
+    for row in rows:
+        for m in methods:
+            assert spec.output.vmin <= row[m] <= spec.output.vmax
+
+
+def test_nieznana_metoda_defuzyfikacji():
+    with pytest.raises(ValueError):
+        FuzzySystem(SPECS[0], defuzz_method="nieistnieje")
 
 
 def test_skrajne_przypadki_klient():
