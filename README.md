@@ -42,6 +42,8 @@ system_rozmyty/
 │   └── sprawozdanie.md        # sprawozdanie wg schematu projektowania
 ├── results/                   # wygenerowane wykresy i tabele testów
 ├── main.py                    # runner / CLI
+├── interaktywny.py            # interaktywny kreator zapytań (menu + pytania)
+├── start.sh                   # uruchamia .venv i interaktywny.py
 └── requirements.txt
 ```
 
@@ -66,6 +68,14 @@ Pojedyncze zapytanie do wybranego systemu:
 python main.py --system klient     --query 3000 80    # -> Ryzyko = 50.00 %
 python main.py --system inwestycja --query 8 85       # -> Ryzyko = 81.94 %
 python main.py --system dostawy    --query 95 7        # -> Ryzyko = 16.67 %
+```
+
+Tryb interaktywny (kreator pyta o system 1–3 i po kolei o wartości wejść):
+
+```bash
+python interaktywny.py
+# albo skrót, który sam aktywuje .venv:
+./start.sh
 ```
 
 Analiza operatorów (porównanie metod defuzyfikacji centroid/bisector/mom/som/lom):

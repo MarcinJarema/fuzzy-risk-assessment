@@ -6,7 +6,7 @@
 **Typ systemu:** Mamdani Type‑1, zbiory rozmyte typu 1
 **Repozytorium:** <https://github.com/MarcinJarema/fuzzy-risk-assessment>
 
-**Autorzy (grupa 2‑osobowa):** Marcin Jarema, Marcin Jarema
+**Autorzy (grupa 2‑osobowa):** Marcin Jarema, Aleksandra Gocławska
 
 Sprawozdanie realizuje proces projektowania systemu rozmytego krok po kroku,
 zgodnie ze schematem projektowania (kroki 1–7), powtórzony dla trzech
@@ -16,15 +16,12 @@ niezależnych problemów biznesowych z obszaru zarządzania ryzykiem.
 
 | Część projektu | Osoba odpowiedzialna |
 |---|---|
-| Opis zastosowania, koncepcja systemów | Marcin Jarema |
+| Opis zastosowania, koncepcja systemów | Aleksandra Gocławska |
 | Zmienne lingwistyczne i zbiory rozmyte | Marcin Jarema |
 | Baza reguł (wiedza eksperta) | Marcin Jarema |
 | Implementacja (silnik, kod, testy) | Marcin Jarema |
-| Analiza operatorów i przykłady | Marcin Jarema |
+| Analiza operatorów i przykłady | Aleksandra Gocławska |
 | Wnioski, dokumentacja | Marcin Jarema |
-
-> *Uwaga: powyższy podział należy uzupełnić zgodnie z faktycznym wkładem obu
-> uczestników grupy.*
 
 ### Mapa kryteriów oceny
 
@@ -256,7 +253,7 @@ Dla każdego systemu sprawdzono pięć reprezentatywnych kombinacji wejść
 | 95 | 7 | 16,67 |
 | 90 | 55 | 50,00 |
 
-Dodatkowo poprawność systemów potwierdza zestaw 15 testów automatycznych
+Dodatkowo poprawność systemów potwierdza zestaw 22 testów automatycznych
 (`pytest`), sprawdzających m.in. kompletność bazy reguł, pełne pokrycie zakresów
 zmiennych, zakres wartości wyjściowych oraz **monotoniczność** (wzrost
 zmienności rynku nie obniża szacowanego ryzyka inwestycji).
